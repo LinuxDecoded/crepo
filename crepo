@@ -12,7 +12,11 @@ if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
     read RESP
     echo "Enter your Github Personal Access Token: " 
     read -s G_TOKEN
-    curl -i -H "Authorization: token ${G_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
+    if [ ${RESP} == "true" ]; then
+	curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
+    else
+	curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
+    fi
     retCode=$?
     if [ ${retCode} -eq 0 ]; then
 	echo "Remote repo successfully created."
