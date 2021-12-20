@@ -1,41 +1,65 @@
 #!/bin/bash
 
-echo "Please run this script from a local git repo!!!!!"
-echo "Are you running this script from a local repo? (y/n)"
-read RESP
-if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
-    echo "Enter your Github Username: "
-    read User
-    echo "Enter Repository name: "
-    read REPO
-    echo "Did you want to keep it private? (true/false)"
-    read RESP
-    echo "Enter your Github Personal Access Token: " 
-    read -s G_TOKEN
-    if [ ${RESP} == "true" ]; then
-	curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
+create_repo() {
+	if [ ${RESP} == "true" ]; then
+		curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
     else
-	curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
+		curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
     fi
-    retCode=$?
-    if [ ${retCode} -eq 0 ]; then
-	echo "Remote repo successfully created."
-	echo "Do you want to connect your local repo to this remote repo? (y/n)"
-	read RESP
-	if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
-	    git remote add origin https://github.com/"${User}"/"${REPO}".git
-	    retCode=$?
-	    if [ ${retCode} -eq 0 ]; then
-		echo "Remote repo successfully connected with Local repo."
-	    else
-		echo "Error in connecting remote repo with local repo !!!"
-	    fi
-	else
-	    echo "Exiting Script..."
-	fi    
+	retCode=$?
+	if [ ${retCode} -eq 0 ]; then
+		echo "Remote repo successfully created."    
     else
-	echo "Error in creating Remote repository !!!"
+		echo "Error in creating Remote repository !!!"
+    fi
+}
+
+echo "=======CREPO(GitHub Remote Repo creation Script)======="
+echo "Enter your Github Username: "
+read User
+echo "Enter Repository name: "
+read REPO
+echo "Did you want to keep it private? (true/false)"
+read RESP
+echo "Enter your Github Personal Access Token: " 
+read -s GIT_TOKEN
+if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
+    create_repo $GIT_TOKEN $REPO $RESP
+	
+    if [ ${retCode} -eq 0 ]; then
+		echo "Do you want to connect your local repo to this remote repo? (y/n)"
+		read RESP
+		if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
+	    	git remote add origin https://github.com/"${User}"/"${REPO}".git
+	    	retCode=$?
+	    	if [ ${retCode} -eq 0 ]; then
+				echo "Remote repo successfully connected with Local repo."
+	    	else
+				echo "Error in connecting remote repo with local repo !!!"
+	    	fi
+		else
+			echo "You could check your repo at: https://github.com/${User}/${REPO}.git"
+	    	echo "Exiting Script..."
+			exit 0
+		fi    
+    else
+		exit 1
     fi	
 else
-    echo "Exting Script..."
+    echo "You are not running this script from local git repository, you'll not be able to connect the created remote repo to local repo!!!"
+	echo "Do you want to continue? (y/n)"
+	read RESP
+	if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
+		create_repo $GIT_TOKEN $REPO $RESP
+		if [ ${retCode} -eq 0 ]; then
+			echo "You could check your repo at: https://github.com/${User}/${REPO}.git"
+	    	echo "Exiting Script..."
+			exit 0
+		else
+			exit 1
+		fi
+	else
+		echo "Exiting Script..."
+		exit 0
+	fi
 fi
