@@ -2,8 +2,10 @@
 
 create_repo() {
 	if [ ${RESP} == "true" ]; then
+		echo "Respond is ${RESP}"
 		curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
     else
+		echo "Respond is ${RESP}"
 		curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
     fi
 	retCode=$?
@@ -28,8 +30,8 @@ if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
 	
     if [ ${retCode} -eq 0 ]; then
 		echo "Do you want to connect your local repo to this remote repo? (y/n)"
-		read RESP
-		if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
+		read RES
+		if [[ ${RES} == "y" || ${RES} == "Y" ]]; then
 	    	git remote add origin https://github.com/"${User}"/"${REPO}".git
 	    	retCode=$?
 	    	if [ ${retCode} -eq 0 ]; then
@@ -48,8 +50,8 @@ if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
 else
     echo "You are not running this script from local git repository, you'll not be able to connect the created remote repo to local repo!!!"
 	echo "Do you want to continue? (y/n)"
-	read RESP
-	if [[ ${RESP} == "y" || ${RESP} == "Y" ]]; then
+	read RES
+	if [[ ${RES} == "y" || ${RES} == "Y" ]]; then
 		create_repo $GIT_TOKEN $REPO $RESP
 		if [ ${retCode} -eq 0 ]; then
 			echo "You could check your repo at: https://github.com/${User}/${REPO}.git"
