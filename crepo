@@ -3,10 +3,10 @@
 create_repo() {
 	if [ ${RESP} == "true" ]; then
 		echo "Respond is ${RESP}"
-		curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
+		curl -f -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
     else
 		echo "Respond is ${RESP}"
-		curl -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
+		curl -f -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
     fi
 	retCode=$?
 	if [ ${retCode} -eq 0 ]; then
@@ -17,12 +17,9 @@ create_repo() {
 }
 
 echo "=======CREPO(GitHub Remote Repo creation Script)======="
-echo "Enter your Github Username: "
-read User
-echo "Enter Repository name: "
-read REPO
-echo "Did you want to keep it private? (true/false)"
-read RESP
+read -p "Enter your Github Username: " User
+read -p "Enter Repository name: " REPO
+read -p "Did you want to keep it private? (true/false)" RESP
 read -sp "Enter your Github Personal Access Token: " GIT_TOKEN 
 echo ""
 if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
