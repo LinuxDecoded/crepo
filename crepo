@@ -23,8 +23,8 @@ echo "Enter Repository name: "
 read REPO
 echo "Did you want to keep it private? (true/false)"
 read RESP
-echo "Enter your Github Personal Access Token: " 
-read -s GIT_TOKEN
+read -sp "Enter your Github Personal Access Token: " GIT_TOKEN 
+echo ""
 if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
     create_repo $GIT_TOKEN $REPO $RESP
 	
