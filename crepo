@@ -2,17 +2,35 @@
 
 create_repo() {
 	if [ ${RESP} == "true" ]; then
-		echo "Respond is ${RESP}"
-		curl -f -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
+		echo "Repository will be private !!"
+		curl -f -s -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
     else
-		echo "Respond is ${RESP}"
-		curl -f -i -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
+		echo "Repository will be public !!"
+		curl -f -s -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
     fi
 	retCode=$?
 	if [ ${retCode} -eq 0 ]; then
 		echo "Remote repo successfully created."    
     else
 		echo "Error in creating Remote repository !!!"
+        rm $HOME/.cache/crepo/git_passwd
+    fi
+}
+
+check_pwd() {
+    if [ -f "$HOME/.cache/crepo/git_passwd" ]; then
+        read -p "Previous GitHub Personal Access Token exist ! Do you want to use that (Y/N) ? " pt
+        if [[ ${pt} == "y" || ${pt} == "Y" ]]; then
+            GIT_TOKEN=`cat $HOME/.cache/crepo/git_passwd | perl -e 'chomp($encoded=<>); chomp($passwd=unpack("u",$encoded)); print "$passwd\n"'`
+        else
+            read -sp "Enter your GitHub Personal Access Token: " GIT_TOKEN
+            echo ""
+        fi
+    else
+        mkdir -p $HOME/.cache/crepo
+        read -sp "Enter your GitHub Peronal Access Token: " GIT_TOKEN
+        echo ""
+        printf '%s\n' "$GIT_TOKEN" | perl -e 'chomp($passwd=<>); chomp($encoded=pack("u",$passwd));print "$encoded\n"' > $HOME/.cache/crepo/git_passwd
     fi
 }
 
@@ -20,8 +38,7 @@ echo "=======CREPO(GitHub Remote Repo creation Script)======="
 read -p "Enter your Github Username: " User
 read -p "Enter Repository name: " REPO
 read -p "Did you want to keep it private? (true/false)" RESP
-read -sp "Enter your Github Personal Access Token: " GIT_TOKEN 
-echo ""
+check_pwd
 if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
     create_repo $GIT_TOKEN $REPO $RESP
 	
