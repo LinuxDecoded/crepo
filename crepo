@@ -3,16 +3,23 @@
 create_repo() {
 	if [ ${RESP} == "true" ]; then
 		echo "Repository will be private !!"
-		curl -f -s -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos
+        retCode=$(curl -f -s -w '%{http_code}' -o /dev/null -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\", \"private\":\"${RESP}\"}" https://api.github.com/user/repos)
     else
 		echo "Repository will be public !!"
-		curl -f -s -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos
+        retCode=$(curl -f -s -w '%{http_code}' -o /dev/null  -H "Authorization: token ${GIT_TOKEN}" -d "{\"name\":\"${REPO}\"}" https://api.github.com/user/repos)
     fi
-	retCode=$?
-	if [ ${retCode} -eq 0 ]; then
+
+	if [[ ${retCode} == 201 ]]; then
 		echo "Remote repo successfully created."    
-    else
+    elif [[ ${retCode} == 401 ]]; then
 		echo "Error in creating Remote repository !!!"
+        echo "Bad credentials !!!"
+        rm $HOME/.cache/crepo/git_passwd
+    elif [[ ${retCode} == 403 ]]; then
+        echo "To many failed attempts !!!"
+        rm $HOME/.cache/crepo/git_passwd
+    else
+        echo "Some error occured !!!"
         rm $HOME/.cache/crepo/git_passwd
     fi
 }
@@ -34,15 +41,19 @@ check_pwd() {
     fi
 }
 
+credential() {
+    read -p "Enter your GitHub Username: " User
+    read -p "Enter Repository name: " REPO
+    read -p "Did you want to keep it private (true/false)? : " RESP
+    check_pwd
+}
+
 echo "=======CREPO(GitHub Remote Repo creation Script)======="
-read -p "Enter your Github Username: " User
-read -p "Enter Repository name: " REPO
-read -p "Did you want to keep it private? (true/false)" RESP
-check_pwd
 if [[ $(pwd) = $(git rev-parse --show-toplevel) ]]; then
+    credential
     create_repo $GIT_TOKEN $REPO $RESP
-	
-    if [ ${retCode} -eq 0 ]; then
+	retCode=$?
+    if [[ ${retCode} == 0 ]]; then
 		echo "Do you want to connect your local repo to this remote repo? (y/n)"
 		read RES
 		if [[ ${RES} == "y" || ${RES} == "Y" ]]; then
@@ -66,8 +77,10 @@ else
 	echo "Do you want to continue? (y/n)"
 	read RES
 	if [[ ${RES} == "y" || ${RES} == "Y" ]]; then
+        credential
 		create_repo $GIT_TOKEN $REPO $RESP
-		if [ ${retCode} -eq 0 ]; then
+        retCode=$?
+		if [[ ${retCode} == 0 ]]; then
 			echo "You could check your repo at: https://github.com/${User}/${REPO}.git"
 	    	echo "Exiting Script..."
 			exit 0
